@@ -1,0 +1,11 @@
+[user]
+	name = coolbry95
+	email = coolbry95@gmail.com
+[core]
+	editor = nvim
+[color]
+	ui = true
+[push]
+	default = simple
+[url "git@github.com:"]
+	insteadOf = https://github.com/
