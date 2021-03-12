@@ -1,13 +1,9 @@
 call plug#begin('~/.local/share/nvim/plugged')
 
-"Plug 'fatih/vim-go'
-Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-Plug 'Shougo/deoplete-lsp'
+"Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+"Plug 'Shougo/deoplete-lsp'
 
-Plug 'autozimu/LanguageClient-neovim', {
-	\ 'branch': 'next',
-	\ 'do': 'bash install.sh',
-	\ }
+Plug 'hrsh7th/nvim-compe'
 
 " (Optional) Multi-entry selection UI.
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
@@ -16,36 +12,10 @@ Plug 'junegunn/fzf.vim'
 Plug 'neovim/nvim-lspconfig', {'do': ':TSUpdate'}
 Plug 'nvim-treesitter/nvim-treesitter'
 
-Plug 'iCyMind/NeoSolarized'
+Plug 'overcache/NeoSolarized'
 
 " All of your Plugins must be added before the following line
 call plug#end()
-
-" BEGIN LSP
-" \ 'go': ['/home/coolbry95/go/src/github.com/golang/tools/gopls/gopls', '-rpc.trace', '-vv', '-logfile', '/tmp/gopls'],
-"let g:LanguageClient_serverCommands = {
-"	\ 'go': ['gopls'],
-"	\ 'python': ['/usr/local/bin/pyls'],
-"	\ }
-"let g:LanguageClient_selectionUI = "fzf"
-
-"let g:LanguageClient_loadSettings = 1
-"let g:LanguageClient_settingsPath = "~/.config/nvim/lsp.json"
-" let g:LanguageClient_trace = "verbose"
-" let g:LanguageClient_loggingLevel='DEBUG'
-" let g:LanguageClient_loggingFile='/tmp/lc.log'
-" let g:LanguageClient_serverStderr = '/tmp/lc.stderr'
-
-"autocmd BufWritePre *.go :call LanguageClient#textDocument_formatting_sync()
-
-"nnoremap <F5> :call LanguageClient_contextMenu()<CR>
-"" Or map each action separately
-"nnoremap <silent> K :call LanguageClient#textDocument_hover()<CR>
-"nnoremap <silent> gd :call LanguageClient#textDocument_definition()<CR>
-"nnoremap <silent> <F2> :call LanguageClient#textDocument_rename()<CR>
-
-"END LSP
-
 
 lua <<EOF
 local lspconfig = require 'lspconfig'
@@ -92,7 +62,7 @@ EOF
 "autocmd BufWritePre *.go lua goimports(100000)
 autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 1000)
 
-"nnoremap <silent> <space>K    <cmd>lua vim.lsp.buf.code_action()<CR>
+nnoremap <silent> <space>K    <cmd>lua vim.lsp.buf.code_action()<CR>
 nnoremap <silent> <space>f    <cmd>lua vim.lsp.buf.formatting()<CR>
 nnoremap <silent> <space>rn    <cmd>lua vim.lsp.buf.rename()<CR>
 nnoremap <silent> gd    <cmd>lua vim.lsp.buf.definition()<CR>
@@ -113,42 +83,118 @@ nnoremap <silent> <space>q    <cmd>lua vim.lsp.diagnostic.set_loclist()<CR>
 nnoremap <Leader>b :Buffers<CR>
 nnoremap <Leader>f :Files<CR>
 
-" deoplete
+lua <<EOF
+vim.o.completeopt = "menuone,noselect"
 
-let g:deoplete#enable_at_startup = 1
+require'compe'.setup {
+  enabled = true;
+  autocomplete = true;
+  debug = false;
+  min_length = 1;
+  preselect = 'disable';
+  throttle_time = 80;
+  source_timeout = 200;
+  incomplete_delay = 400;
+  max_abbr_width = 100;
+  max_kind_width = 100;
+  max_menu_width = 100;
+  documentation = true;
 
-call deoplete#custom#option({
-	\ 'ignore_case': v:true,
-	\ 'ignore_sources': {'_': ['buffer']},
-	\ })
+  source = {
+    path = true;
+    buffer = true;
+    calc = false;
+    vsnip = false;
+    nvim_lsp = true;
+    nvim_lua = true;
+    spell = true;
+    tags = true;
+    snippets_nvim = false;
+    treesitter = true;
+  };
+}
 
-"autocmd CompleteDone * silent! pclose!
-autocmd InsertLeave * silent! pclose!
+
+local t = function(str)
+  return vim.api.nvim_replace_termcodes(str, true, true, true)
+end
+
+local check_back_space = function()
+    local col = vim.fn.col('.') - 1
+    if col == 0 or vim.fn.getline('.'):sub(col, col):match('%s') then
+        return true
+    else
+        return false
+    end
+end
+
+-- Use (s-)tab to:
+--- move to prev/next item in completion menuone
+--- jump to prev/next snippet's placeholder
+_G.tab_complete = function()
+  if vim.fn.pumvisible() == 1 then
+    return t "<C-n>"
+  --elseif vim.fn.call("vsnip#available", {1}) == 1 then
+  --  return t "<Plug>(vsnip-expand-or-jump)"
+  elseif check_back_space() then
+    return t "<Tab>"
+  else
+    return vim.fn['compe#complete']()
+  end
+end
+_G.s_tab_complete = function()
+  if vim.fn.pumvisible() == 1 then
+    return t "<C-p>"
+  --elseif vim.fn.call("vsnip#jumpable", {-1}) == 1 then
+  --  return t "<Plug>(vsnip-jump-prev)"
+  else
+    return t "<S-Tab>"
+  end
+end
+
+vim.api.nvim_set_keymap("i", "<Tab>", "v:lua.tab_complete()", {expr = true})
+vim.api.nvim_set_keymap("s", "<Tab>", "v:lua.tab_complete()", {expr = true})
+vim.api.nvim_set_keymap("i", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
+vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
+
+EOF
+
+" deoplete start
+
+"let g:deoplete#enable_at_startup = 1
+"
+"call deoplete#custom#option({
+"	\ 'ignore_case': v:true,
+"	\ 'ignore_sources': {'_': ['buffer']},
+"	\ })
+"
+""autocmd CompleteDone * silent! pclose!
+"autocmd InsertLeave * silent! pclose!
+
+
+" noinsert does not insert a match, it forces the user to
+"set completeopt=longest,menuone
+"
+"inoremap <expr> <C-n> pumvisible() ? '<C-n>' :
+"  \ '<C-n><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
+"inoremap <expr> <M-,> pumvisible() ? '<C-n>' :
+"  \ '<C-x><C-o><C-n><C-p><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
+"
+"" if pumvisible then tab moves
+"" if pumvisible then SHIFT tab moves backwards
+"" else tab
+"" // this is like how YCM is set up
+"inoremap <silent><expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+"" shift tab moves backwards up menu	
+"inoremap <silent><expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<Tab>"
+"" close pop up menu if open with ENTER
+"inoremap <silent><expr> <CR> pumvisible() ? deoplete#close_popup() : "\<CR>"
+" deoplete end
 
 " leave buffer without saving
 set hidden
 
-" noinsert does not insert a match, it forces the user to
-set completeopt=longest,menuone
-
-inoremap <expr> <C-n> pumvisible() ? '<C-n>' :
-  \ '<C-n><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
-inoremap <expr> <M-,> pumvisible() ? '<C-n>' :
-  \ '<C-x><C-o><C-n><C-p><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
-
-" if pumvisible then tab moves
-" if pumvisible then SHIFT tab moves backwards
-" else tab
-" // this is like how YCM is set up
-inoremap <silent><expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
-" shift tab moves backwards up menu	
-inoremap <silent><expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<Tab>"
-" close pop up menu if open with ENTER
-inoremap <silent><expr> <CR> pumvisible() ? deoplete#close_popup() : "\<CR>"
-
 syntax on
-"colorscheme eink
-"colorscheme solarized
 colorscheme NeoSolarized
 set background=dark
 " for when a terminal with true color support is used
@@ -165,6 +211,7 @@ set tabstop=4
 set shiftwidth=4
 set noexpandtab
 
+" show > for tabs
 set list
 
 " set numbers on
