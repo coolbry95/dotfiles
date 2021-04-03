@@ -211,6 +211,10 @@ set tabstop=4
 set shiftwidth=4
 set noexpandtab
 
+set nohlsearch
+set incsearch
+set signcolumn=yes
+
 " show > for tabs
 set list
 
@@ -227,7 +231,7 @@ set noerrorbells
 set encoding=utf-8
 
 " differences from vim to nvim
-set noautoindent
+"set noautoindent
 set mouse=""
 set nosmarttab
 set laststatus=1
