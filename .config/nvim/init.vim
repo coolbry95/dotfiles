@@ -9,13 +9,21 @@ Plug 'hrsh7th/nvim-compe'
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 
-Plug 'neovim/nvim-lspconfig', {'do': ':TSUpdate'}
-Plug 'nvim-treesitter/nvim-treesitter'
+Plug 'nvim-lua/popup.nvim'
+Plug 'nvim-lua/plenary.nvim'
+Plug 'nvim-telescope/telescope.nvim'
+Plug 'nvim-telescope/telescope-fzy-native.nvim'
+
+Plug 'neovim/nvim-lspconfig'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+
 
 Plug 'overcache/NeoSolarized'
 
 " All of your Plugins must be added before the following line
 call plug#end()
+
+let mapleader = " "
 
 lua <<EOF
 local lspconfig = require 'lspconfig'
@@ -57,6 +65,7 @@ require'nvim-treesitter.configs'.setup {
 		enable = true,              -- false will disable the whole extension
 	},
 }
+
 EOF
 
 "autocmd BufWritePre *.go lua goimports(100000)
@@ -80,8 +89,40 @@ nnoremap <silent> ]d    <cmd>lua vim.lsp.diagnostic.goto_next()<CR>
 nnoremap <silent> <space>q    <cmd>lua vim.lsp.diagnostic.set_loclist()<CR>
 
 " fzf
-nnoremap <Leader>b :Buffers<CR>
-nnoremap <Leader>f :Files<CR>
+"nnoremap <Leader>b :Buffers<CR>
+"nnoremap <Leader>f :Files<CR>
+
+lua <<EOF
+
+require('telescope').setup {
+    defaults = {
+        file_sorter = require('telescope.sorters').get_fzy_sorter,
+
+        mappings = {
+            i = {
+                ["<C-x>"] = false,
+                ["<C-q>"] = require('telescope.actions').send_to_qflist,
+            },
+        }
+    },
+
+    extensions = {
+        fzy_native = {
+            override_generic_sorter = false,
+            override_file_sorter = true,
+        }
+    }
+}
+-- This will load fzy_native and have it override the default file sorter
+require('telescope').load_extension('fzy_native')
+
+EOF
+
+
+nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
+nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
+nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
+nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 
 lua <<EOF
 vim.o.completeopt = "menuone,noselect"
