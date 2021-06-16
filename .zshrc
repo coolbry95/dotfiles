@@ -13,7 +13,7 @@ export PATH
 #alias vim="nvim"
 alias nvim="/home/coolbry95/nvim-linux64/bin/nvim"
 alias vim="/home/coolbry95/nvim-linux64/bin/nvim"
-alias config="/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME"
+alias dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME"
 
 export TZ="/usr/share/zoneinfo/America/Detroit"
 export EDITOR="nvim"
