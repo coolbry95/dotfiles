@@ -22,8 +22,6 @@ require('packer').startup(function()
 			'hrsh7th/cmp-nvim-lsp',
 			'hrsh7th/cmp-nvim-lua',
 			'ray-x/cmp-treesitter',
-
-
 		}
 	}
 
@@ -50,12 +48,30 @@ require('packer').startup(function()
 
 end)
 
+
 vim.g.mapleader = " "
 
 local lspconfig = require 'lspconfig'
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+
+lspconfig.pylsp.setup{
+	cmd = { "pylsp" },
+	filetypes = { "python" },
+	root_dir = function(fname)
+		local root_files = {
+			'pyproject.toml',
+			'setup.py',
+			'setup.cfg',
+			'requirements.txt',
+			'Pipfile',
+		}
+		return lspconfig.util.root_pattern(unpack(root_files))(fname) or lspconfig.util.find_git_ancestor(fname)
+	end,
+	single_file_support = true,
+	capabilities = capabilities,
+}
 
 lspconfig.gopls.setup{
 	--cmd = {'gopls', '-rpc.trace', '-v', '-logfile', '/tmp/gpls'},
@@ -162,6 +178,8 @@ cmp.setup {
 		copleteopt = 'menu,menuone,noselect'
 	},
 
+	preselect = cmp.PreselectMode.None,
+
 	snippet = {
 	expand = function(args)
 		vim.fn["vsnip#anonymous"](args.body)
@@ -187,8 +205,12 @@ cmp.setup {
 
 	mapping = {
 		['<Tab>'] = cmp.mapping(function(fallback)
-			if vim.fn.pumvisible() == 1 then
-				vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<C-n>', true, true, true), 'n')
+			--if vim.fn.pumvisible() == 1 then
+			--vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<C-n>', true, true, true), 'n')
+			if cmp.visible() then
+				--cmp.complete()
+				cmp.select_next_item()
+				--vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<C-n>', true, true, true), 'n')
 			elseif check_back_space() then
 				vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, true, true), 'n')
 			elseif vim.fn['vsnip#available']() == 1 then
@@ -201,8 +223,10 @@ cmp.setup {
 		"s",
 		}),
 		['<S-Tab>'] = function(fallback)
-			if vim.fn.pumvisible() == 1 then
-				vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<C-p>', true, true, true), 'n')
+			--if vim.fn.pumvisible() == 1 then
+			--	vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<C-p>', true, true, true), 'n')
+			if cmp.visible() then
+				cmp.select_prev_item()
 			elseif vim.fn['vsnip#available']() == 1 then
 				vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>(vsnip-expand-or-jump)', true, true, true), '')
 			else
@@ -284,7 +308,7 @@ vim.opt.encoding = "utf-8"
 --set noautoindent
 vim.opt.mouse = ""
 vim.opt.smarttab = false
-vim.opt.laststatus = 1
+vim.opt.laststatus = 2
 --set mouse=""
 --set nosmarttab
 --set laststatus=1
