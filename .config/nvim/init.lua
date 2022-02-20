@@ -48,8 +48,9 @@ require('packer').startup(function()
 
 end)
 
-
 vim.g.mapleader = " "
+vim.api.nvim_set_keymap('', '<Space>', '<Nop>', { noremap = true, silent = true })
+--vim.g.maplocalleader = ' '
 
 local lspconfig = require 'lspconfig'
 
@@ -115,7 +116,7 @@ require'nvim-treesitter.configs'.setup {
 
 -- TODO
 --"autocmd BufWritePre *.go lua goimports(100000)
---autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 1000)
+vim.cmd [[ autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 1000) ]]
 
 vim.api.nvim_set_keymap('n', '<Space>K',  [[<Cmd>lua vim.lsp.buf.code_action()<CR>]], { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<Space>f',  [[<Cmd>lua vim.lsp.buf.formatting()<CR>]], { noremap = true, silent = true })
@@ -163,13 +164,16 @@ vim.api.nvim_set_keymap('n', 'fh',  [[<Cmd>lua require('telescope.builtin').help
 
 local cmp = require'cmp'
 
-local t = function(str)
-	return vim.api.nvim_replace_termcodes(str, true, true, true)
+local has_words_before = function()
+  if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then
+    return false
+  end
+  local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+  return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
 end
 
-local check_back_space = function()
-		local col = vim.fn.col('.') - 1
-		return col == 0 or vim.fn.getline('.'):sub(col, col):match('%s')
+local feedkey = function(key, mode)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
 end
 
 cmp.setup {
@@ -181,9 +185,9 @@ cmp.setup {
 	preselect = cmp.PreselectMode.None,
 
 	snippet = {
-	expand = function(args)
-		vim.fn["vsnip#anonymous"](args.body)
-	end,
+		expand = function(args)
+			vim.fn["vsnip#anonymous"](args.body)
+		end,
 	},
 
 	formatting = {
@@ -205,8 +209,6 @@ cmp.setup {
 
 	mapping = {
 		['<Tab>'] = cmp.mapping(function(fallback)
-			--if vim.fn.pumvisible() == 1 then
-			--vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<C-n>', true, true, true), 'n')
 			if cmp.visible() then
 				--cmp.complete()
 				cmp.select_next_item()
@@ -223,8 +225,6 @@ cmp.setup {
 		"s",
 		}),
 		['<S-Tab>'] = function(fallback)
-			--if vim.fn.pumvisible() == 1 then
-			--	vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<C-p>', true, true, true), 'n')
 			if cmp.visible() then
 				cmp.select_prev_item()
 			elseif vim.fn['vsnip#available']() == 1 then
