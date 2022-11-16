@@ -54,13 +54,17 @@ vim.g.maplocalleader = ' '
 
 local lspconfig = require 'lspconfig'
 
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
 -- Make runtime files discoverable to the server
 local runtime_path = vim.split(package.path, ';')
 table.insert(runtime_path, 'lua/?.lua')
 table.insert(runtime_path, 'lua/?/init.lua')
+
+lspconfig.rust_analyzer.setup {
+  capabilities = capabilities,
+  settings = {},
+ }
 
 lspconfig.sumneko_lua.setup {
   capabilities = capabilities,
@@ -106,6 +110,7 @@ lspconfig.pylsp.setup{
 			plugins = {
 				pylsp_mypy = { enabled = true },
 				isort = { enabled = true },
+				black = { enabled = true },
 			},
 		},
 	},
@@ -147,7 +152,7 @@ function goimports(timeoutms)
 end
 
 require'nvim-treesitter.configs'.setup {
-	ensure_installed = "maintained", -- one of "all", "maintained" (parsers with maintainers), or a list of languages
+	ensure_installed = "all",
 	highlight = {
 		enable = true,              -- false will disable the whole extension
 	},
@@ -175,7 +180,7 @@ end
 
 lsp_n_key_map = {
 	['<leader>K'] = vim.lsp.buf.code_action,
-	['<leader>f'] = vim.lsp.buf.formatting,
+	['<leader>fo'] = vim.lsp.buf.formatting,
 	['<leader>rn'] = vim.lsp.buf.rename,
 	['gd'] = vim.lsp.buf.definition,
 	['K'] = vim.lsp.buf.hover,
@@ -334,9 +339,9 @@ vim.opt.hidden = true
 
 vim.opt.syntax = 'on'
 ------------------syntax on
-vim.cmd [[
-	colorscheme NeoSolarized
-]]
+
+--vim.cmd('colorscheme NeoSolarized')
+vim.cmd('colorscheme solarized')
 vim.opt.background = 'dark'
 --set background=dark
 -- for when a terminal with true color support is used
@@ -376,10 +381,20 @@ vim.opt.signcolumn = "yes"
 vim.opt.number = true
 --set number
 
-vim.cmd [[
-	filetype plugin indent on
-	autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
-]]
+vim.api.nvim_create_autocmd('FileType', {
+	pattern = { '*.yaml', '*.yml' },
+	--command = 'setlocal ts=2 sts=2 sw=2 expandtab',
+	callback = function()
+		vim.opt_local.tabstop = 2
+		vim.opt_local.softtabstop = 2
+		vim.opt_local.shiftwidth = 2
+		vim.opt_local.expandtab = true
+	end,
+})
+--vim.cmd [[
+--	filetype plugin indent on -- this is default in neovim
+--	autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+--]]
 
 -- i hate bells
 vim.opt.visualbell = false
