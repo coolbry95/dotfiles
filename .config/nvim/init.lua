@@ -66,7 +66,7 @@ lspconfig.rust_analyzer.setup {
   settings = {},
  }
 
-lspconfig.sumneko_lua.setup {
+lspconfig.lua_ls.setup {
   capabilities = capabilities,
   settings = {
     Lua = {
@@ -180,7 +180,7 @@ end
 
 lsp_n_key_map = {
 	['<leader>K'] = vim.lsp.buf.code_action,
-	['<leader>fo'] = vim.lsp.buf.formatting,
+	['<leader>fo'] = vim.lsp.buf.format,
 	['<leader>rn'] = vim.lsp.buf.rename,
 	['gd'] = vim.lsp.buf.definition,
 	['K'] = vim.lsp.buf.hover,
@@ -203,6 +203,13 @@ lsp_v_key_map = {
 
 key_map('n', lsp_n_key_map)
 key_map('v', lsp_v_key_map)
+
+-- this way versus key_map?
+vim.keymap.set("x", "<leader>p", "\"_dP")
+-- copy into system clipboard
+vim.keymap.set("n", "<leader>y", "\"+y")
+vim.keymap.set("v", "<leader>y", "\"+y")
+vim.keymap.set("n", "<leader>Y", "\"+Y")
 
 
 --vim.api.nvim_set_keymap('n', '<Space>K',  [[<Cmd>lua vim.lsp.buf.code_action()<CR>]], { noremap = true, silent = true })
@@ -395,6 +402,9 @@ vim.api.nvim_create_autocmd('FileType', {
 --	filetype plugin indent on -- this is default in neovim
 --	autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
 --]]
+
+-- default plus linematch:60
+vim.opt.diffopt = "internal,filler,closeoff,linematch:60"
 
 -- i hate bells
 vim.opt.visualbell = false
