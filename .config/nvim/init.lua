@@ -1,19 +1,34 @@
--- Auto install packer.nvim if not exists
-local fn = vim.fn
-local install_path = fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
-if fn.empty(fn.glob(install_path)) > 0 then
-  fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
-  vim.cmd 'packadd packer.nvim'
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  })
 end
+vim.opt.rtp:prepend(lazypath)
 
---require('plugins')
-require('packer').startup(function()
-  -- Packer can manage itself
-	use 'wbthomason/packer.nvim'
+-- needs to be before lazy.setup
+vim.api.nvim_set_keymap('', '<Space>', '<Nop>', { silent = true })
+vim.g.mapleader = ' '
+vim.g.maplocalleader = ' '
 
-	use {
+require("lazy").setup({
+	{
+    'nvim-telescope/telescope.nvim', tag = '0.1.6',
+      dependencies = {
+			'nvim-lua/popup.nvim',
+			'nvim-lua/plenary.nvim',
+			'nvim-telescope/telescope-fzy-native.nvim',
+		}
+	},
+
+	{
 		'hrsh7th/nvim-cmp',
-		requires = {
+		dependencies = {
 			-- Install snippet engine (This example installs [hrsh7th/vim-vsnip](https://github.com/hrsh7th/vim-vsnip))
 			'hrsh7th/vim-vsnip',
 			-- Install the buffer completion source
@@ -23,34 +38,37 @@ require('packer').startup(function()
 			'hrsh7th/cmp-nvim-lua',
 			'ray-x/cmp-treesitter',
 		}
-	}
+	},
 
-
-	-- (Optional) Multi-entry selection UI.
-	--use { 'junegunn/fzf', { 'do': { -> fzf#install() } }
-	--use 'junegunn/fzf.vim'
-
-	use {
+	{
 		'nvim-telescope/telescope.nvim',
-		requires = {
+		dependencies = {
 			'nvim-lua/popup.nvim',
 			'nvim-lua/plenary.nvim',
 			'nvim-telescope/telescope-fzy-native.nvim',
 		}
-	}
+	},
 
-	use 'neovim/nvim-lspconfig'
-	use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
+	{
+	  "folke/which-key.nvim",
+	  config = function()
+		vim.o.timeout = true
+		vim.o.timeoutlen = 300
+		require("which-key").setup {
+		  -- your configuration comes here
+		  -- or leave it empty to use the default settings
+		  -- refer to the configuration section below
+		}
+	  end
+	},
 
-	use 'overcache/NeoSolarized'
-	use 'ishan9299/nvim-solarized-lua'
+	'neovim/nvim-lspconfig',
 
+	{ 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
 
-end)
-
-vim.api.nvim_set_keymap('', '<Space>', '<Nop>', { silent = true })
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+	'overcache/NeoSolarized',
+	'ishan9299/nvim-solarized-lua',
+})
 
 local lspconfig = require 'lspconfig'
 
@@ -108,9 +126,13 @@ lspconfig.pylsp.setup{
 	settings = {
 		pylsp = {
 			plugins = {
-				pylsp_mypy = { enabled = true },
-				isort = { enabled = true },
-				black = { enabled = true },
+				ruff = {
+					enabled = true,
+					extendSelect = {"I"},
+					format = {"I"},
+					--extendIgnore = {"E501"},
+				},
+				pylsp_mypy = { enabled = false },
 			},
 		},
 	},
@@ -148,7 +170,8 @@ function goimports(timeoutms)
 		end
 	end
 
-	vim.lsp.buf.formatting_sync(nil, timeoutms)
+	--vim.lsp.buf.formatting_sync(nil, timeoutms)
+	vim.lsp.buf.format({async = false})
 end
 
 require'nvim-treesitter.configs'.setup {
@@ -163,10 +186,34 @@ require'nvim-treesitter.configs'.setup {
 vim.api.nvim_create_autocmd("BufWritePre", {
     pattern = "*.go",
     callback = function(args)
-		vim.lsp.buf.formatting_sync(nil, 1000)
+		--vim.lsp.buf.formatting_sync(nil, 1000)
+		vim.lsp.buf.format({async = false})
     end,
     desc = "auto format go files",
 })
+
+--vim.api.nvim_create_autocmd("BufWritePre", {
+--  pattern = "*.go",
+--  callback = function()
+--    local params = vim.lsp.util.make_range_params()
+--    params.context = {only = {"source.organizeImports"}}
+--    -- buf_request_sync defaults to a 1000ms timeout. Depending on your
+--    -- machine and codebase, you may want longer. Add an additional
+--    -- argument after params if you find that you have to write the file
+--    -- twice for changes to be saved.
+--    -- E.g., vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, 3000)
+--    local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params)
+--    for cid, res in pairs(result or {}) do
+--      for _, r in pairs(res.result or {}) do
+--        if r.edit then
+--          local enc = (vim.lsp.get_client_by_id(cid) or {}).offset_encoding or "utf-16"
+--          vim.lsp.util.apply_workspace_edit(r.edit, enc)
+--        end
+--      end
+--    end
+--    vim.lsp.buf.format({async = false})
+--  end
+--})
 
 function key_map(mode, key_map)
 	for key, value in pairs(key_map) do
@@ -180,17 +227,20 @@ end
 
 lsp_n_key_map = {
 	['<leader>K'] = vim.lsp.buf.code_action,
-	['<leader>fo'] = vim.lsp.buf.format,
+	['<leader>fo'] = function()
+		vim.lsp.buf.format { async = true }
+	end,
 	['<leader>rn'] = vim.lsp.buf.rename,
 	['gd'] = vim.lsp.buf.definition,
+	['gD'] = vim.lsp.buf.declaration,
+	['gi'] = vim.lsp.buf.implementation,
 	['K'] = vim.lsp.buf.hover,
 	['<C-]'] = vim.lsp.buf.implementation,
 	['<C-k'] = vim.lsp.buf.signature_help,
-	--['gD'] = vim.lsp.buf.type_definition,
+	['<space>D'] = vim.lsp.buf.type_definition,
 	['gr'] = vim.lsp.buf.references,
 	['g0'] = vim.lsp.buf.document_symbol,
 	['gW'] = vim.lsp.buf.workspace_symbol,
-	['gD'] = vim.lsp.buf.declaration, -- keymap used twice
 	['<leader>e'] = vim.lsp.buf.show_line_diagnostics,
 	['[d'] = vim.lsp.buf.goto_prev,
 	[']d'] = vim.lsp.buf.goto_next,
@@ -210,25 +260,6 @@ vim.keymap.set("x", "<leader>p", "\"_dP")
 vim.keymap.set("n", "<leader>y", "\"+y")
 vim.keymap.set("v", "<leader>y", "\"+y")
 vim.keymap.set("n", "<leader>Y", "\"+Y")
-
-
---vim.api.nvim_set_keymap('n', '<Space>K',  [[<Cmd>lua vim.lsp.buf.code_action()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('v', '<Space>K',  [[<Cmd>lua vim.lsp.buf.range_code_action()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', '<Space>f',  [[<Cmd>lua vim.lsp.buf.formatting()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', '<Space>rn',  [[<Cmd>lua vim.lsp.buf.rename()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', 'gd',  [[<Cmd>lua vim.lsp.buf.definition()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', 'K',  [[<Cmd>lua vim.lsp.buf.hover()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', '<C-]',  [[<Cmd>lua vim.lsp.buf.implementation()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', '<C-k',  [[<Cmd>lua vim.lsp.buf.signature_help()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', 'gD',  [[<Cmd>lua vim.lsp.buf.type_definition()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', 'gr',  [[<Cmd>lua vim.lsp.buf.references()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', 'g0',  [[<Cmd>lua vim.lsp.buf.document_symbol()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', 'gW',  [[<Cmd>lua vim.lsp.buf.workspace_symbol()<CR>]], { noremap = true, silent = true })
-----vim.api.nvim_set_keymap('n', 'gD',  [[<Cmd>lua vim.lsp.buf.declaration()<CR>]], { noremap = true, silent = true }) -- this is used twice
---vim.api.nvim_set_keymap('n', '<Space>e',  [[<Cmd>lua vim.lsp.buf.show_line_diagnostics()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', '[d',  [[<Cmd>lua vim.lsp.buf.goto_prev()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', ']d',  [[<Cmd>lua vim.lsp.buf.goto_next()<CR>]], { noremap = true, silent = true })
---vim.api.nvim_set_keymap('n', '<Space>q',  [[<Cmd>lua vim.lsp.buf.set_loclist()<CR>]], { noremap = true, silent = true })
 
 require('telescope').setup {
     defaults = {
@@ -260,10 +291,6 @@ telescope_n_key_map = {
 }
 
 key_map('n', telescope_n_key_map)
---vim.api.nvim_set_keymap('n', 'ff',  [[<Cmd>lua require('telescope.builtin').find_files()<CR>]], { noremap = true, silent = false })
---vim.api.nvim_set_keymap('n', 'fg',  [[<Cmd>lua require('telescope.builtin').live_grep()<CR>]], { noremap = true, silent = false })
---vim.api.nvim_set_keymap('n', 'fb',  [[<Cmd>lua require('telescope.builtin').buffers()<CR>]], { noremap = true, silent = false })
---vim.api.nvim_set_keymap('n', 'fh',  [[<Cmd>lua require('telescope.builtin').help_tags()<CR>]], { noremap = true, silent = false })
 
 
 local has_words_before = function()
