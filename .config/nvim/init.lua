@@ -1,13 +1,13 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable", -- latest stable release
-    lazypath,
-  })
+	vim.fn.system({
+		"git",
+		"clone",
+		"--filter=blob:none",
+		"https://github.com/folke/lazy.nvim.git",
+		"--branch=stable", -- latest stable release
+		lazypath,
+	})
 end
 vim.opt.rtp:prepend(lazypath)
 
@@ -18,12 +18,19 @@ vim.g.maplocalleader = ' '
 
 require("lazy").setup({
 	{
-    'nvim-telescope/telescope.nvim', tag = '0.1.6',
-      dependencies = {
+		'nvim-telescope/telescope.nvim',
+		tag = '0.1.6',
+		dependencies = {
 			'nvim-lua/popup.nvim',
 			'nvim-lua/plenary.nvim',
 			'nvim-telescope/telescope-fzy-native.nvim',
 		}
+	},
+
+	{
+		"L3MON4D3/LuaSnip",
+		-- follow latest release.
+		version = "v2.*",
 	},
 
 	{
@@ -50,16 +57,16 @@ require("lazy").setup({
 	},
 
 	{
-	  "folke/which-key.nvim",
-	  config = function()
-		vim.o.timeout = true
-		vim.o.timeoutlen = 300
-		require("which-key").setup {
-		  -- your configuration comes here
-		  -- or leave it empty to use the default settings
-		  -- refer to the configuration section below
-		}
-	  end
+		"folke/which-key.nvim",
+		config = function()
+			vim.o.timeout = true
+			vim.o.timeoutlen = 300
+			require("which-key").setup {
+				-- your configuration comes here
+				-- or leave it empty to use the default settings
+				-- refer to the configuration section below
+			}
+		end
 	},
 
 	'neovim/nvim-lspconfig',
@@ -68,6 +75,7 @@ require("lazy").setup({
 
 	'overcache/NeoSolarized',
 	'ishan9299/nvim-solarized-lua',
+	--'Tsuzat/NeoSolarized.nvim', -- TODO: Try this one out
 })
 
 local lspconfig = require 'lspconfig'
@@ -80,37 +88,37 @@ table.insert(runtime_path, 'lua/?.lua')
 table.insert(runtime_path, 'lua/?/init.lua')
 
 lspconfig.rust_analyzer.setup {
-  capabilities = capabilities,
-  settings = {},
- }
-
-lspconfig.lua_ls.setup {
-  capabilities = capabilities,
-  settings = {
-    Lua = {
-      runtime = {
-        -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
-        version = 'LuaJIT',
-        -- Setup your lua path
-        path = runtime_path,
-      },
-      diagnostics = {
-        -- Get the language server to recognize the `vim` global
-        globals = { 'vim' },
-      },
-      workspace = {
-        -- Make the server aware of Neovim runtime files
-        library = vim.api.nvim_get_runtime_file('', true),
-      },
-      -- Do not send telemetry data containing a randomized but unique identifier
-      telemetry = {
-        enable = false,
-      },
-    },
-  },
+	capabilities = capabilities,
+	settings = {},
 }
 
-lspconfig.pylsp.setup{
+lspconfig.lua_ls.setup {
+	capabilities = capabilities,
+	settings = {
+		Lua = {
+			runtime = {
+				-- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
+				version = 'LuaJIT',
+				-- Setup your lua path
+				path = runtime_path,
+			},
+			diagnostics = {
+				-- Get the language server to recognize the `vim` global
+				globals = { 'vim' },
+			},
+			workspace = {
+				-- Make the server aware of Neovim runtime files
+				library = vim.api.nvim_get_runtime_file('', true),
+			},
+			-- Do not send telemetry data containing a randomized but unique identifier
+			telemetry = {
+				enable = false,
+			},
+		},
+	},
+}
+
+lspconfig.pylsp.setup {
 	cmd = { "pylsp" },
 	filetypes = { "python" },
 	root_dir = function(fname)
@@ -128,8 +136,8 @@ lspconfig.pylsp.setup{
 			plugins = {
 				ruff = {
 					enabled = true,
-					extendSelect = {"I"},
-					format = {"I"},
+					extendSelect = { "I" },
+					format = { "I" },
 					--extendIgnore = {"E501"},
 				},
 				pylsp_mypy = { enabled = false },
@@ -140,9 +148,9 @@ lspconfig.pylsp.setup{
 	capabilities = capabilities,
 }
 
-lspconfig.gopls.setup{
+lspconfig.gopls.setup {
 	--cmd = {'gopls', '-rpc.trace', '-v', '-logfile', '/tmp/gpls'},
-	cmd = {'gopls', 'serve'},
+	cmd = { 'gopls', 'serve' },
 	settings = {
 		gopls = {
 			gofumpt = true,
@@ -150,7 +158,7 @@ lspconfig.gopls.setup{
 			staticcheck = true,
 		},
 	},
-    capabilities = capabilities,
+	capabilities = capabilities,
 }
 
 function goimports(timeoutms)
@@ -171,25 +179,25 @@ function goimports(timeoutms)
 	end
 
 	--vim.lsp.buf.formatting_sync(nil, timeoutms)
-	vim.lsp.buf.format({async = false})
+	vim.lsp.buf.format({ async = false })
 end
 
-require'nvim-treesitter.configs'.setup {
+require 'nvim-treesitter.configs'.setup {
 	ensure_installed = "all",
 	highlight = {
-		enable = true,              -- false will disable the whole extension
+		enable = true, -- false will disable the whole extension
 	},
 }
 
 --"autocmd BufWritePre *.go lua goimports(100000)
 --vim.cmd [[ autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 1000) ]]
 vim.api.nvim_create_autocmd("BufWritePre", {
-    pattern = "*.go",
-    callback = function(args)
+	pattern = "*.go",
+	callback = function(args)
 		--vim.lsp.buf.formatting_sync(nil, 1000)
-		vim.lsp.buf.format({async = false})
-    end,
-    desc = "auto format go files",
+		vim.lsp.buf.format({ async = false })
+	end,
+	desc = "auto format go files",
 })
 
 --vim.api.nvim_create_autocmd("BufWritePre", {
@@ -241,14 +249,15 @@ lsp_n_key_map = {
 	['gr'] = vim.lsp.buf.references,
 	['g0'] = vim.lsp.buf.document_symbol,
 	['gW'] = vim.lsp.buf.workspace_symbol,
-	['<leader>e'] = vim.lsp.buf.show_line_diagnostics,
+	['<leader>e'] = vim.diagnostic.open_float,
 	['[d'] = vim.lsp.buf.goto_prev,
 	[']d'] = vim.lsp.buf.goto_next,
-	['<leader>q'] = vim.lsp.buf.set_loclist,
+	['<leader>q'] = vim.diagnostic.setloclist,
 }
 
 lsp_v_key_map = {
-	['<leader>K'] = vim.lsp.buf.range_code_action,
+	--['<leader>K'] = vim.lsp.buf.code_action(vim.lsp.util.make_range_params()),
+	['<leader>K'] = vim.lsp.buf.code_action,
 }
 
 key_map('n', lsp_n_key_map)
@@ -262,23 +271,23 @@ vim.keymap.set("v", "<leader>y", "\"+y")
 vim.keymap.set("n", "<leader>Y", "\"+Y")
 
 require('telescope').setup {
-    defaults = {
-        file_sorter = require('telescope.sorters').get_fzy_sorter,
+	defaults = {
+		file_sorter = require('telescope.sorters').get_fzy_sorter,
 
-        mappings = {
-            i = {
-                ["<C-x>"] = false,
-                ["<C-q>"] = require('telescope.actions').send_to_qflist + require('telescope.actions').open_qflist,
-            },
-        }
-    },
+		mappings = {
+			i = {
+				["<C-x>"] = false,
+				["<C-q>"] = require('telescope.actions').send_to_qflist + require('telescope.actions').open_qflist,
+			},
+		}
+	},
 
-    extensions = {
-        fzy_native = {
-            override_generic_sorter = false,
-            override_file_sorter = true,
-        }
-    }
+	extensions = {
+		fzy_native = {
+			override_generic_sorter = false,
+			override_file_sorter = true,
+		}
+	}
 }
 -- This will load fzy_native and have it override the default file sorter
 require('telescope').load_extension('fzy_native')
@@ -294,11 +303,12 @@ key_map('n', telescope_n_key_map)
 
 
 local has_words_before = function()
-  local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-  return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+	local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+	return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
 end
 
-local cmp = require'cmp'
+local luasnip = require 'luasnip'
+local cmp = require 'cmp'
 
 cmp.setup {
 
@@ -332,27 +342,45 @@ cmp.setup {
 	},
 
 	mapping = {
+		['<CR>'] = cmp.mapping(function(fallback)
+			if cmp.visible() then
+				if luasnip.expandable() then
+					luasnip.expand()
+				else
+					cmp.confirm({
+						select = true,
+					})
+				end
+			else
+				fallback()
+			end
+		end),
+
 		['<Tab>'] = cmp.mapping(function(fallback)
 			if cmp.visible() then
 				--cmp.complete()
 				cmp.select_next_item()
 				--vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<C-n>', true, true, true), 'n')
+				--elseif vim.fn['vsnip#available']() == 1 then
+				--vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>(vsnip-expand-or-jump)', true, true, true), '')
+			elseif luasnip.locally_jumpable(1) then
+				luasnip.jump(1)
 			elseif has_words_before() then
 				vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, true, true), 'n')
-			elseif vim.fn['vsnip#available']() == 1 then
-				vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>(vsnip-expand-or-jump)', true, true, true), '')
 			else
 				fallback()
 			end
 		end, {
-		"i",
-		"s",
+			"i",
+			"s",
 		}),
 		['<S-Tab>'] = function(fallback)
 			if cmp.visible() then
 				cmp.select_prev_item()
-			elseif vim.fn['vsnip#available']() == 1 then
-				vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>(vsnip-expand-or-jump)', true, true, true), '')
+			elseif luasnip.locally_jumpable(-1) then
+				luasnip.jump(-1)
+				--elseif vim.fn['vsnip#available']() == 1 then
+				--	vim.fn.feedkeys(vim.api.nvim_replace_termcodes('<Plug>(vsnip-expand-or-jump)', true, true, true), '')
 			else
 				fallback()
 			end
