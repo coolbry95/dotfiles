@@ -71,7 +71,7 @@ require("lazy").setup({
 
 	'neovim/nvim-lspconfig',
 
-	{ 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
+	{ 'nvim-treesitter/nvim-treesitter', lazy = false, build = ':TSUpdate' },
 
 	'overcache/NeoSolarized',
 	'ishan9299/nvim-solarized-lua',
@@ -157,7 +157,7 @@ function goimports(timeoutms)
 	vim.lsp.buf.format({ async = false })
 end
 
-require 'nvim-treesitter.configs'.setup {
+require 'nvim-treesitter'.setup {
 	ensure_installed = "all",
 	highlight = {
 		enable = true, -- false will disable the whole extension
