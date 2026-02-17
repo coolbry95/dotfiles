@@ -157,12 +157,28 @@ function goimports(timeoutms)
 	vim.lsp.buf.format({ async = false })
 end
 
-require 'nvim-treesitter'.setup {
-	ensure_installed = "all",
-	highlight = {
-		enable = true, -- false will disable the whole extension
-	},
-}
+local patterns = {}
+local parsers = require('nvim-treesitter.config').get_installed('parsers')
+for _, p in ipairs(parsers) do
+	local parser_patterns = vim.treesitter.language.get_filetypes(p)
+	for _, pp in pairs(parser_patterns) do
+		table.insert(patterns, pp)
+	end
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+	desc = "Enable Treesitter features",
+	pattern = patterns,
+	callback = function(args)
+		-- syntax highlighting, provided by Neovim
+		vim.treesitter.start()
+--		-- folds, provided by Neovim
+--		vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+--		vim.wo.foldmethod = 'expr'
+--		-- indentation, provided by nvim-treesitter
+		vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+	end,
+})
 
 --"autocmd BufWritePre *.go lua goimports(100000)
 --vim.cmd [[ autocmd BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil, 1000) ]]
