@@ -19,12 +19,19 @@ vim.g.maplocalleader = ' '
 require("lazy").setup({
 	{
 		'nvim-telescope/telescope.nvim',
-		tag = '0.1.6',
+		tag = 'v0.2.2',
 		dependencies = {
-			'nvim-lua/popup.nvim',
 			'nvim-lua/plenary.nvim',
 			'nvim-telescope/telescope-fzy-native.nvim',
 		}
+	},
+
+	{
+		'MeanderingProgrammer/render-markdown.nvim',
+		dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.nvim' },
+		---@module 'render-markdown'
+		---@type render.md.UserConfig
+		opts = {},
 	},
 
 	{
@@ -48,15 +55,6 @@ require("lazy").setup({
 	},
 
 	{
-		'nvim-telescope/telescope.nvim',
-		dependencies = {
-			'nvim-lua/popup.nvim',
-			'nvim-lua/plenary.nvim',
-			'nvim-telescope/telescope-fzy-native.nvim',
-		}
-	},
-
-	{
 		"folke/which-key.nvim",
 		config = function()
 			vim.o.timeout = true
@@ -73,9 +71,9 @@ require("lazy").setup({
 
 	{ 'nvim-treesitter/nvim-treesitter', lazy = false, build = ':TSUpdate' },
 
-	'overcache/NeoSolarized',
+	--'overcache/NeoSolarized',
 	'ishan9299/nvim-solarized-lua',
-	--'Tsuzat/NeoSolarized.nvim', -- TODO: Try this one out
+	'Tsuzat/NeoSolarized.nvim', -- TODO: Try this one out
 })
 
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
@@ -87,7 +85,8 @@ table.insert(runtime_path, 'lua/?/init.lua')
 
 vim.lsp.enable({
 	'gopls',
-	'pylsp',
+	--'pylsp',
+	'ty',
 	'rust_analyzer',
 })
 
@@ -120,6 +119,15 @@ vim.lsp.config('pylsp', {
 				pylsp_mypy = { enabled = false },
 			},
 		},
+	},
+	single_file_support = true,
+	capabilities = capabilities,
+})
+
+vim.lsp.config('ty', {
+	filetypes = { "python" },
+	settings = {
+		--ty = {},
 	},
 	single_file_support = true,
 	capabilities = capabilities,
@@ -418,38 +426,29 @@ vim.opt.hidden = true
 vim.opt.syntax = 'on'
 ------------------syntax on
 
+-- Tsuzat/NeoSolarized.nvim
 --vim.cmd('colorscheme NeoSolarized')
+-- ishan9299/nvim-solarized-lua
 vim.cmd('colorscheme solarized')
 vim.opt.background = 'dark'
---set background=dark
 -- for when a terminal with true color support is used
 vim.opt.termguicolors = true
---set termguicolors
 
 vim.opt.undofile = true
 -- swap file
 vim.opt.backupdir = vim.fn.expand('~/.config/nvim/backup//')
 vim.opt.directory = vim.fn.expand('~/.config/nvim/swap//')
 vim.opt.undodir = vim.fn.expand('~/.config/nvim/undo//')
---set backupdir=~/.config/nvim/backup//
---set directory=~/.config/nvim/swap//
---set undodir=~/.config/nvim/undo//
 
 -- tabs and spaces
 -- number of visual spaces per TAB
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = false
---set tabstop=4
---set shiftwidth=4
---set noexpandtab
 
 vim.opt.hlsearch = false
 vim.opt.incsearch = true
 vim.opt.signcolumn = "yes"
---set nohlsearch
---set incsearch
---set signcolumn=yes
 
 ---- show > for tabs
 --vim.opt.list = true
@@ -457,7 +456,6 @@ vim.opt.signcolumn = "yes"
 
 -- set numbers on
 vim.opt.number = true
---set number
 
 vim.api.nvim_create_autocmd('FileType', {
 	pattern = { '*.yaml', '*.yml' },
@@ -480,20 +478,13 @@ vim.opt.diffopt = "internal,filler,closeoff,linematch:60"
 -- i hate bells
 vim.opt.visualbell = false
 vim.opt.errorbells = false
---set novisualbell
---set noerrorbells
 
 vim.opt.encoding = "utf-8"
---set encoding=utf-8
 
 -- differences from vim to nvim
 --set noautoindent
 vim.opt.mouse = ""
 vim.opt.smarttab = false
 vim.opt.laststatus = 2
---set mouse=""
---set nosmarttab
---set laststatus=1
 -- bottom line numbers in the corner
 vim.opt.ruler = true
---set ruler
